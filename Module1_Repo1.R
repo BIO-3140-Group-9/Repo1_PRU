@@ -18,7 +18,6 @@ species.s <- dat %>%
 
 data_summary <- species.n %>%
   mutate(species.s)
-species.ns
 
 view(data_summary)
 #complies the code to show one table with n.puncture and n.specimen
@@ -33,4 +32,3 @@ for(i in species){
 dev.off()
 
 list.files(pattern=".pdf")
-
