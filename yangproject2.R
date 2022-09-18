@@ -29,11 +29,11 @@ find.peaks <- function(x,y,mult = 100){
 }
 
 pseed.max <- pseed.wide%>%
-  group_by(date, speed)%>%
+  group_by(fish, speed)%>%
   mutate(peak = frame %in% find.peaks(frame, amp.sum))%>%
   filter(peak == T)
 
-p.seed.max <- pseed.max%>%
+pseed.sum.max <- pseed.max%>%
   group_by(fish, speed)%>%
   summarize(amp.sum.mean = mean(amp.sum))
 
@@ -45,18 +45,19 @@ SE <- function(x){
 
 pseed.sum.se <- pseed.max%>%
   group_by(fish, speed)%>%
-  summary(amp.sum.se = SE(amp.sum))
+  summarize(amp.sum.se = SE(amp.sum))
+
 
 pseed.sum.max <- pseed.sum.max%>%
-  left_join(pseed.sum.se, by = c("speed", "fish"))%>%
+  left_join(pseed.sum.se, by = c("speed", "fish"))
   
 #4. Use ggplot to plot the amp.sum mean vs specific swimming speed with error bars
   
 pd <- position_dodge(0.1)
 
 ggplot(pseed.sum.max, aes(x = speed, y = amp.sum.mean, col = fish)) +
-  geom_errorbar(aes(ymin = amp.sum.mean - amp.sum.se, ymax = amp.sum.mean + amp.sum.se), colour = "black", width = .1, position = pd) +
-  geom_line(position = pd) +
+  geom_errorbar(aes(ymin = amp.sum.mean - amp.sum.se, ymax = amp.sum.mean + amp.sum.se), colour = "black", width = .5, position = pd) +
+  geom_smooth(method = "lm") +
   geom_point(position = pd, size = 2, shape = 21, fill = "white") +
   theme_classic()
 
@@ -75,7 +76,8 @@ pseed.sum.max <- pseed.sum.max%>%
 
 #6. Plot of the metabolic power output of each fish vs. mean maximum of amp.sum
 
-ggplot(pseed.sum.max, aes(x = amp.sum.mean, y = met.rate, col = fish)) +
-  geom_errorbar(aes(ymin = amp.sum.mean - amp.sum.se, ymax = amp.sum.mean + amp.sum.se), colour = "black", width = .1, position = pd) +
-  geom_point() + 
+ggplot(pseed.sum.max, aes(x = amp.met.rate, y = amp.sum.mean, col = fish)) +
+  geom_errorbar(aes(ymin = amp.sum.mean - amp.sum.se, ymax = amp.sum.mean + amp.sum.se), colour = "black", width = .03, position = pd) +
+  geom_smooth(method = "lm") +
+  geom_point(position = pd, size = 2, shape = 21, fill = "white") + 
   theme_classic()
