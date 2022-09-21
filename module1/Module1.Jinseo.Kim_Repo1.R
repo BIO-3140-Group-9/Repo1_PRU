@@ -3,9 +3,12 @@ library(tidyverse)
 
 dat <- read.csv("scales.csv")
 
-sapply(dat,class)
+class.column <- sapply(dat,class)
+view(class.column)
 
-dim(dat)
+dimension.data <- data.frame(dim(dat))
+rownames(dimension.data) <- c("N. Rows", "N. Columns")
+view(dimension.data)
 
 species.n <- dat %>% 
   group_by(species) %>%
@@ -32,3 +35,4 @@ for(i in species){
 dev.off()
 
 list.files(pattern=".pdf")
+
