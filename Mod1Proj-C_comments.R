@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> eyang
 # Project Report Pts
 library(ggplot2)
 library(tidyverse)
