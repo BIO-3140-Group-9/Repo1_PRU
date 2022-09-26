@@ -57,6 +57,17 @@ aicw(anole.phylo.aic$AICc)
 
 anova(pgls.BM3.Both)
 
-#6 
+#6 Visualizing Effect of PD, ArbPD, or Both on the SVl~Hindlimb Residuals
+anole.log <- anole.log%>%
+  mutate(phylo.res.PH=residuals(pgls.BM1.PH))%>%
+  mutate(phylo.res.ArbPD=residuals(pgls.BM2.ArbPD))%>%
+  mutate(phylo.res.Both=residuals(pgls.BM3.Both))%>%
+  print()
+
+anole.log%>%
+  dplyr::select(Ecomorph,phylo.res.PH,phylo.res.ArbPD,phylo.res.Both)%>%
+  pivot_longer(cols=c("phylo.res.PH","phylo.res.ArbPD","phylo.res.Both"))%>%
+  print%>%
+  ggplot(aes(x=Ecomorph,y=value, col=Ecomorph)) +geom_boxplot() +stat_summary(fun=mean, geom="point", size=3)+facet_grid(name~.,scales = "free_y")+ylab("residual")
 
 
