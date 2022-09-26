@@ -1,30 +1,31 @@
+#Set Up
 library(ggplot2)
 library(tidyverse)
 
-dat <- read.csv("scales.csv")
+#1 a dat variable containing the scales dataset 
+dat <- read.csv("scales.csv") 
 
-class.column <- sapply(dat,class)
-view(class.column)
+#2 A line of code which reports the class of each column in  the dataset. 
+sapply(dat,class)
 
-dimension.data <- data.frame(dim(dat))
-rownames(dimension.data) <- c("N. Rows", "N. Columns")
-view(dimension.data)
+#3 A line of code which reports the dimensions of the dataset.
+dim(dat)
 
-species.n <- dat %>% 
+#4 Code that produces a summary of the number of scales punctured for each species.
+species.n<- dat %>%
   group_by(species) %>%
-  summarise(n.puncture = n())
+  summarise(n = n())
+species.n
 
-species.s <- dat %>%
+#5 Code that produces a summary of the number of specimens sampled for each species.
+dat %>% 
   count(species,specimen) %>%
   print() %>%
   count(species,name = "n.specimens")
 
-data_summary <- species.n %>%
-  mutate(species.s)
-
-view(data_summary)
-#complies the code to show one table with n.puncture and n.specimen
-
+#6 Code that produces a PDF file containing 6 figures, one for each species that includes a boxplot of puncture force verus quadrant.
+dat$species <- as.factor(dat$species)
+species <- levels(dat$species)
 pdf("species.quadrant.pdf")
 for(i in species){
   p <- dat %>%
@@ -35,4 +36,3 @@ for(i in species){
 dev.off()
 
 list.files(pattern=".pdf")
-
