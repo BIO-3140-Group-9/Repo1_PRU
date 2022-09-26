@@ -59,4 +59,5 @@ anova(pgls.BM3.Both)
 
 #6 
 
-
+anole.log <- anole.log %>%
+  mutate(phylo.res = residuals(pgls.BM3.Both))
