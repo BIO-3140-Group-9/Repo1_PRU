@@ -33,8 +33,18 @@ anole.log.res <-anole.log%>%
   mutate(res=residuals(anole.log.ArbPD.lm))%>%
   print()
 
-anole.log.res%>%
-  ggplot(aes(res,SVL))+geom_point()+geom_abline(slope=coef(anole.log.PH.lm)[2],intercept=coef(anole.log.PH.lm)[1],col="blue")
+#lol no idea how to do three
 
-anole.log.res%>%
-  ggplot(aes(HTotal,res))+geom_point()+geom_abline(slope=coef(anole.log.ArbPD.lm)[2],intercept=coef(anole.log.ArbPD.lm)[1],col="blue")
+anole.tree <- read.tree("anole.tre")
+
+pgls.BM1.PH <- gls(HTotal ~SVL+PH, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+pgls.BM2.ArbPD <- gls(HTotal ~SVL+ArbPD, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+pgls.BM3.Both <- gls(HTotal ~SVL+PH+ArbPD, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+anole.phylo.aic <- AICc(pgls.BM1.PH,pgls.BM2.ArbPD,pgls.BM3.Both)
+aicw(anole.phylo.aic$AICc)
+#According to the AIC test, both PH and ArbPD together are significant predictor
+
+anova(pgls.BM3.Both)
