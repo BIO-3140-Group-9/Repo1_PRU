@@ -70,4 +70,5 @@ anole.log%>%
   print%>%
   ggplot(aes(x=Ecomorph,y=value, col=Ecomorph)) +geom_boxplot() +stat_summary(fun=mean, geom="point", size=3)+facet_grid(name~.,scales = "free_y")+ylab("residual")
 
-
+anole.log <- anole.log %>%
+  mutate(phylo.res = residuals(pgls.BM3.Both))
