@@ -1,9 +1,14 @@
 ---
-title: "Project 4"
-author: "Projects "R" Us (Group 9)"
-date: "2022-09-30"
-output: pdf_document
+title: "Project-4"
+author: "Projects-R-Us(Group-9)"
+date: "2/Oct/2022"
+output: html_document
+bibliography: BIOL3140.bib
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 ```{r, include=FALSE}
 library(tidyverse) #always
 library(ape) #for evo analysis
@@ -12,9 +17,87 @@ library(MuMIn) #for AIC
 library(geiger) #for eco analysis
 library(knitr) #for knitting options
 ```
-#Introduction
+# Introduction
+The *Anolis* are extremely diverse genus that contains over 400 iguanian reptiles. The anoles can be categorized based on their similiar behavior and ecological niche within a group called ecomorphs. This study aimed to research whether the perch height and diameter influences the hind leg and snout-vent length (SVL) relationship across the ecomorphs, taking their phylogeny into account [@hagey2017there].
 
-#Methods
-#Results
-#Discussion
-#Author Contribution
+<center>
+[![An anolis lizard](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Green_anole.jpg/320px-Green_anole.jpg)](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Green_anole.jpg/320px-Green_anole.jpg)
+</center>
+
+# Methods
+The morphological and ecological data used for this was derived from the ecomophology study done by Hagey et al.The two data sets were combined into a single log transformed data to be used for analysis. Two simple linear models were constructed for preliminary analysis. The first linear model contained hind limb total(Htotal) predicted by SVL in referenced to the perch height data. The second linear model contained Htotal predicted by SVL in referenced to the perch diameter data. The residual of the two linear models were grouped by their ecomorphs and graphed into two separate boxplot to explore how ecomophormophology could have played a role in the Htotal~SVL relationship in respect to perch height/diameter.
+
+To account for the effect that phylogeny has on the relationship, three phylgenetic least squares (PGLS) models were made under the Brownian model. The phylogeny information was derived from the phylogenetic relatinship study by Poe et al. Two PGLS model was constructed with correlation to perch height and perch diameter respectively. The last PGLS model was constructed with correlation to both perch height and perch diameter. The three models ran through Akaike information criterion (AIC) to determine which model had the best fit. The best fitting model was further analyzed using ANOVA to identify which variable had most effect on the HTotal~SVL relationship. Finally all three PGLS model was graphed using a boxplot graph to observe the difference in residual across the ecomorphs under the three different models.
+# Results
+```{r, "load the data"}
+anole <- read_csv("anole.dat.csv")
+anole.eco <- read_csv("anole.eco.csv")
+anole.tree <- read.tree("anole.tre")
+```
+
+```{r, "join, filter, mutate to log"}
+anole2 <- anole%>%
+left_join(anole.eco)%>%
+  filter(!Ecomorph%in%c("U","CH"))%>%
+  na.omit()
+
+anole.log <- anole2%>%
+  mutate_at(c("SVL", "HTotal","PH","ArbPD"),log)
+```
+
+```{r, "PGLS models"}
+### phylogenetic GLS models
+
+#PGLS under BM, no ecomorph
+pgls.BM1 <- gls(HTotal ~SVL, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+#PGLS under BM, w ecomorph
+pgls.BM2 <- gls(HTotal ~SVL * Ecomorph2, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+#PGLS under OU, no ecomorph
+pgls.OU1 <- gls(HTotal ~SVL, correlation = corMartins(0,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+#PGLS under OU, w, ecomorph
+pgls.OU2 <- gls(HTotal ~SVL * Ecomorph2, correlation = corMartins(0,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+```
+
+```{r, "AIC"}
+#AIC operations
+anole.phylo.aic <- AICc(pgls.BM1,pgls.BM2,pgls.OU1,pgls.OU2)
+anole.phylow.aicw <- aicw(anole.phylo.aic$AICc)
+
+#Generation of table with Kable
+n.spec <- anole.phylo.aic%>%
+  group_by(rownames(anole.phylo.aic))%>%
+  summarise(AIC = AICc)
+
+n.spec%>%
+  kable(caption = "AIC Values of PGLS Models of the Hindlimb Under BM and OU")
+
+```
+
+```{r, "add residuals"}
+#add phylo-corrected residuals
+anole.log <- anole.log%>%
+  mutate(phylo.res = residuals(pgls.BM2))
+```
+
+```{r, "Regression Plot of log-transformed HTotal vs SVL by Ecomorph"}
+
+#Regression Plot of log-transformed HTotal vs SVL
+anole.log%>%
+  ggplot(aes(HTotal, SVL, col = Ecomorph2)) + geom_point() + geom_smooth(method = "lm")
+
+```
+
+```{r,"plot residuals", fig.cap = "Boxplot of phylogenetically corrected hindlimb residuals versus anole ecomorph"}
+#plot residuals
+p.eco.phylo <- anole.log%>%
+ggplot(aes(x = Ecomorph2,y = phylo.res)) + geom_boxplot() +stat_summary(fun = mean, geom = "point", size = 3)
+
+print(p.eco.phylo)
+
+```
+
+# Discussion
+# Author Contribution
