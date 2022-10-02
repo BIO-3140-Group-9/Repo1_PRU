@@ -1,9 +1,9 @@
 ---
 title: "Project 4"
 author: "Projects R Us (Group 9)"
-date: "2022-09-30"
+date: "2/Oct/2022"
 output: html_document
-bibliography: PRUProj4.bib
+bibliography: BIOL3140.bib
 ---
 ```{r, include=FALSE}
 library(tidyverse) #always
@@ -15,6 +15,10 @@ library(knitr) #for knitting options
 ```
 # Introduction
 The *Anolis* are extremely diverse genus that contains over 400 iguanian reptiles. The anoles can be categorized based on their similiar behavior and ecological niche within a group called ecomorphs. This study aimed to research whether the perch height and diameter influences the hind leg and snout-vent length (SVL) relationship across the ecomorphs, taking their phylogeny into account.
+
+<center>
+[![An anolis lizard](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Green_anole.jpg/320px-Green_anole.jpg)](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Green_anole.jpg/320px-Green_anole.jpg)
+</center>
 
 # Methods
 The morphological and ecological data used for this was derived from the ecomophology study done by Hagey et al.The two data sets were combined into a single log transformed data to be used for analysis. Two simple linear models were constructed for preliminary analysis. The first linear model contained hind limb total(Htotal) predicted by SVL in referenced to the perch height data. The second linear model contained Htotal predicted by SVL in referenced to the perch diameter data. The residual of the two linear models were grouped by their ecomorphs and graphed into two separate boxplot to explore how ecomophormophology could have played a role in the Htotal~SVL relationship in respect to perch height/diameter.
@@ -57,6 +61,15 @@ pgls.OU2 <- gls(HTotal ~SVL * Ecomorph2, correlation = corMartins(0,phy = anole.
 #AIC operations
 anole.phylo.aic <- AICc(pgls.BM1,pgls.BM2,pgls.OU1,pgls.OU2)
 anole.phylow.aicw <- aicw(anole.phylo.aic$AICc)
+
+#Generation of table with Kable
+n.spec <- anole.phylo.aic%>%
+  group_by(rownames(anole.phylo.aic))%>%
+  summarise(AIC = AICc)
+
+n.spec%>%
+  kable(caption = "AIC Values of PGLS Models Under BM and OU")
+
 ```
 
 ```{r, "add residuals"}
