@@ -5,6 +5,10 @@ date: "2/Oct/2022"
 output: html_document
 bibliography: BIOL3140.bib
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 ```{r, include=FALSE}
 library(tidyverse) #always
 library(ape) #for evo analysis
