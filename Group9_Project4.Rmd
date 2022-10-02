@@ -68,20 +68,28 @@ n.spec <- anole.phylo.aic%>%
   summarise(AIC = AICc)
 
 n.spec%>%
-  kable(caption = "AIC Values of PGLS Models Under BM and OU")
+  kable(caption = "AIC Values of PGLS Models of the Hindlimb Under BM and OU")
 
 ```
 
 ```{r, "add residuals"}
 #add phylo-corrected residuals
 anole.log <- anole.log%>%
-  mutate(phylo.res=residuals(pgls.BM2))
+  mutate(phylo.res = residuals(pgls.BM2))
 ```
 
-``{r,"plot residuals", fig.cap="Boxplot of phylogenetically corrected hindlimb residuals versus anole ecomorph"}
+```{r, "Regression Plot of log-transformed HTotal vs SVL by Ecomorph"}
+
+#Regression Plot of log-transformed HTotal vs SVL
+anole.log%>%
+  ggplot(aes(HTotal, SVL, col = Ecomorph2)) + geom_point() + geom_smooth(method = "lm")
+
+```
+
+```{r,"plot residuals", fig.cap = "Boxplot of phylogenetically corrected hindlimb residuals versus anole ecomorph"}
 #plot residuals
 p.eco.phylo <- anole.log%>%
-ggplot(aes(x=Ecomorph2,y=phylo.res)) +geom_boxplot() +stat_summary(fun=mean, geom="point", size=3)
+ggplot(aes(x = Ecomorph2,y = phylo.res)) + geom_boxplot() +stat_summary(fun = mean, geom = "point", size = 3)
 
 print(p.eco.phylo)
 
