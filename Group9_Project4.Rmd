@@ -145,7 +145,7 @@ anole.log%>%
 <center>
 
 # Discussion
-Discussion goes here.
+The findings from this research show that though at first it might that perch diameter was a better predictor of snout-vent length, the perch height actually was a more consistent predictor. It further shows that the best way to predict SVL is to use both perch height and diameter (Fig.4). These findings are important because they show how important both correcting for phylogeny and looking at multiple traits at once are in order to see how traits are influenced across ecomorphs.
 ```{r, "load the data"}
 anole <- read_csv("anole.dat.csv")
 anole.eco <- read_csv("anole.eco.csv")
@@ -217,3 +217,8 @@ print(p.eco.phylo)
 ```
 
 # Author Contribution
+* James: Point #1 and point #2 - Intro, Methods, Results
+* Eugene: Points 3, 4, 5, and 6
+* Clem: Point #2 - Discussion, Author Contributions and References, points #7 and #8.
+
+# Refrences
