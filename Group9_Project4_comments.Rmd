@@ -1,0 +1,232 @@
+---
+title: "Project-4"
+author: "Projects-R-Us(Group-9)"
+date: "2/Oct/2022"
+output: html_document
+bibliography: BIOL3140.bib
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse) #always
+library(ape) #for evo analysis
+library(nlme) #ditto
+library(MuMIn) #for AIC
+library(geiger) #for eco analysis
+library(knitr) #for knitting options
+
+anole <- read_csv("anole.dat.csv")
+anole.eco <- read_csv("anole.eco.csv")
+
+anole2 <- anole%>%
+  left_join(anole.eco)%>%
+  filter(!Ecomorph%in%c("U","CH"))%>%
+  na.omit()
+
+anole.log <- anole2%>%
+  mutate_at(c("SVL", "HTotal","PH","ArbPD"),log)
+
+anole.log.PH.lm <- lm(HTotal~SVL+PH,anole.log)
+anole.log.ArbPD.lm <- lm(HTotal~SVL+ArbPD,anole.log)
+
+anole.log.res <-anole.log%>%
+  mutate(res.PH =residuals(anole.log.PH.lm))%>%
+  mutate(res.ArbPD =residuals(anole.log.ArbPD.lm))
+
+anole.tree <- read.tree("anole.tre")
+
+pgls.BM1.PH <- gls(HTotal ~SVL+PH, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+pgls.BM2.ArbPD <- gls(HTotal ~SVL+ArbPD, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+pgls.BM3.Both <- gls(HTotal ~SVL+PH+ArbPD, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+anole.log <- anole.log%>%
+  mutate(phylo.res.PH=residuals(pgls.BM1.PH))%>%
+  mutate(phylo.res.ArbPD=residuals(pgls.BM2.ArbPD))%>%
+  mutate(phylo.res.Both=residuals(pgls.BM3.Both))
+```
+# Introduction
+The *Anolis* are extremely diverse genus that contains over 400 iguanian reptiles. The anoles can be categorized based on their similiar behavior and ecological niche within a group called ecomorphs. This study aimed to research whether the perch height and diameter influences the hind leg and snout-vent length (SVL) relationship across the ecomorphs, taking their phylogeny into account [@hagey2017there].
+
+<center>
+[![An anolis lizard](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Green_anole.jpg/320px-Green_anole.jpg)](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Green_anole.jpg/320px-Green_anole.jpg)
+</center>
+
+# Methods
+The morphological and ecological data used for this was derived from the ecomophology study done by @hagey2017there. The two data sets were combined into a single log transformed data to be used for analysis. Two simple linear models were constructed for preliminary analysis. The first linear model contained hind limb total(Htotal) predicted by SVL in referenced to the perch height data. The second linear model contained Htotal predicted by SVL in referenced to the perch diameter data. The residual of the two linear models were grouped by their ecomorphs and graphed into two separate boxplot to explore how ecomophormophology could have played a role in the Htotal~SVL relationship in respect to perch height/diameter.
+
+To account for the effect that phylogeny has on the relationship, three phylgenetic least squares (PGLS) models were made under the Brownian model. The phylogeny information was derived from the phylogenetic relationship study by @poe2017phylogenetic. Two PGLS model was constructed with correlation to perch height and perch diameter respectively(PGLS.PH and PGLS.ArbPD). The last PGLS model was constructed with correlation to both perch height and perch diameter(PGLS.Both). The three models ran through Akaike information criterion (AIC) to determine which model had the best fit. The best fitting model was further analyzed using analysis of variance (ANOVA) to identify which variable had most effect on the HTotal~SVL relationship. Finally all three PGLS model was graphed using a boxplot graph to observe the difference in residual across the ecomorphs under the three different models.
+
+# Results
+The initial analysis of the simple linear models shown figure 1 and figure 2 indicated that perch diameter played a bigger role in predicting the HTotal~SVL relationship.
+<center>
+```{r, echo=FALSE}
+anole.log%>%
+  ggplot(aes(SVL,HTotal))+geom_point()+geom_abline(slope=coef(anole.log.PH.lm)[2],intercept=coef(anole.log.PH.lm)[1],col="red")
+```
+
+***Figure 1. Htotal and SVL relationship in referenced to perch height***
+
+<center>
+```{r, echo=FALSE}
+anole.log%>%
+  ggplot(aes(SVL,HTotal))+geom_point()+geom_abline(slope=coef(anole.log.ArbPD.lm)[2],intercept=coef(anole.log.ArbPD.lm)[1],col="green")
+```
+
+***Figure 2. Htotal and SVL relationship in referenced to perch diameter***
+<center>
+
+<div style="text-align: left">
+When plotting the residue of linear models according to the anole's ecomorph, it showed that the residue of the perch height data deviated less compared to the perch diameter. This can be seen in figure 4 which carries more outliers and the average residue value shows greater deviation from the median of the residue data compared to figure 3.
+ </div>
+
+<center>
+```{r, echo=FALSE}
+anole.log.res%>%
+  ggplot(aes(x=Ecomorph,y=res.PH, col=Ecomorph2)) +geom_boxplot()+stat_summary(fun=mean, geom="point", size=3)
+```
+
+***Figure 3. Residue of perch height linear model grouped by the ecomorph.*** The bigger dot within the boxplot shows the mean of the residue while the smaller dots that lie outside of the boxplot shows the outlying residues within that ecomorph.
+<center>
+
+```{r, echo=FALSE}
+anole.log.res%>%
+  ggplot(aes(x=Ecomorph,y=res.ArbPD, col=Ecomorph)) +geom_boxplot()+stat_summary(fun=mean, geom="point", size=3)
+```
+
+***Figure 4. Residue of perch diameter linear model grouped by the ecomorph.*** 
+
+<center>
+
+<div style="text-align: left">
+The AIC analysis of the three Brownian model showed that PGLS.Both was the best model for predicting HTotal~SVL relationship when taking phylogeny was taken into account, indicated by the lowest delta value.
+</div>
+
+<center>
+```{r, echo=FALSE}
+anole.phylo.aic <- AICc(pgls.BM1.PH,pgls.BM2.ArbPD,pgls.BM3.Both)
+aicw(anole.phylo.aic$AICc)
+```
+
+***Table 1. AIC analysis of the three PGLS model*** The first row shows the PGLS model in respect to perch height (PGLS.PH). The second row shows the PGLS model in respect to perch diameter (PGLS.Arb.PD). The third row shows the PGLS model in respect to both variables (PGLS.Both).
+
+
+<center>
+
+<div style="text-align: left">
+The ANOVA of PGLS.Both revealed that perch diameter and SVL had the most significant correlation within this model.
+</div>
+
+<center>
+```{r, echo=FALSE}
+anova(pgls.BM3.Both)
+```
+
+***Table 2. ANOVA of the PGLS of both variables under Brownian motion*** 
+
+<center>
+
+<div style="text-align: left">
+The boxplot of the three PGLS boxplot data further reiterates the AIC and ANOVA findings as the boxplot of the PGLS model accounting for both variables had less overall outliers compared to PGLS.ArbPD while having closer average and median value of the residue compared to the PGLS.PH.
+</div>
+
+<center>
+```{r, echo=FALSE}
+anole.log%>%
+  dplyr::select(Ecomorph,phylo.res.PH,phylo.res.ArbPD,phylo.res.Both)%>%
+  pivot_longer(cols=c("phylo.res.PH","phylo.res.ArbPD","phylo.res.Both"))%>%
+  ggplot(aes(x=Ecomorph,y=value, col=Ecomorph)) +geom_boxplot() +stat_summary(fun=mean, geom="point", size=3)+facet_grid(name~.,scales = "free_y")+ylab("residual")
+```
+
+***Figure 4. Residue of three PGLS model grouped by the ecomorph.*** 
+
+<center>
+
+# Discussion
+The findings from this research show that though at first it might that perch diameter was a better predictor of snout-vent length, the perch height actually was a more consistent predictor. It further shows that the best way to predict SVL is to use both perch height and diameter (Fig.4). These findings are important because they show how important both correcting for phylogeny and looking at multiple traits at once are in order to see how traits are influenced across ecomorphs.
+
+## Misc. Code Chunks Used(Item 4)
+```{r, "load the data"}
+anole <- read_csv("anole.dat.csv")
+anole.eco <- read_csv("anole.eco.csv")
+anole.tree <- read.tree("anole.tre")
+```
+
+```{r, "join, filter, mutate to log"}
+anole2 <- anole%>%
+left_join(anole.eco)%>%
+  filter(!Ecomorph%in%c("U","CH"))%>%
+  na.omit()
+
+anole.log <- anole2%>%
+  mutate_at(c("SVL", "HTotal","PH","ArbPD"),log)
+```
+
+```{r, "PGLS models"}
+### phylogenetic GLS models
+
+#PGLS under BM, no ecomorph
+pgls.BM1 <- gls(HTotal ~SVL, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+#PGLS under BM, w ecomorph
+pgls.BM2 <- gls(HTotal ~SVL * Ecomorph2, correlation = corBrownian(1,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+#PGLS under OU, no ecomorph
+pgls.OU1 <- gls(HTotal ~SVL, correlation = corMartins(0,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+
+#PGLS under OU, w, ecomorph
+pgls.OU2 <- gls(HTotal ~SVL * Ecomorph2, correlation = corMartins(0,phy = anole.tree,form=~Species),data = anole.log, method = "ML")
+```
+
+## Unaltered AIC Chunk Produced Through ktable(item 5)
+```{r, "AIC"}
+#AIC operations
+anole.phylo.aic <- AICc(pgls.BM1,pgls.BM2,pgls.OU1,pgls.OU2)
+anole.phylow.aicw <- aicw(anole.phylo.aic$AICc)
+
+#Generation of table with Kable
+n.spec <- anole.phylo.aic%>%
+  group_by(rownames(anole.phylo.aic))%>%
+  summarise(AIC = AICc)
+
+n.spec%>%
+  kable(caption = "AIC Values of PGLS Models of the Hindlimb Under BM and OU")
+
+```
+
+## Item 6
+```{r, "add residuals"}
+#add phylo-corrected residuals
+anole.log <- anole.log%>%
+  mutate(phylo.res = residuals(pgls.BM2))
+```
+
+```{r, "Regression Plot of log-transformed HTotal vs SVL by Ecomorph"}
+
+#Regression Plot of log-transformed HTotal vs SVL
+anole.log%>%
+  ggplot(aes(HTotal, SVL, col = Ecomorph2)) + geom_point() + geom_smooth(method = "lm")
+
+```
+
+```{r,"plot residuals", fig.cap = "Boxplot of phylogenetically corrected hindlimb residuals versus anole ecomorph"}
+#plot residuals
+p.eco.phylo <- anole.log%>%
+ggplot(aes(x = Ecomorph2,y = phylo.res)) + geom_boxplot() +stat_summary(fun = mean, geom = "point", size = 3)
+
+print(p.eco.phylo)
+
+```
+
+# Author Contribution
+* James: Point #1 and point #2 - Intro, Methods, Results
+* Eugene: Points 3, 4, 5, and 6
+* Clem: Point #2 - Discussion, Author Contributions and References, points #7 and #8.
+
+# CPK comments:
+
+Great work. Looks super slick! Congrats! 15/15
+# Refrences
